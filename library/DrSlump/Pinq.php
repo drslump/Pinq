@@ -119,16 +119,30 @@ namespace DrSlump {
             if (0 === func_num_args()) {
                 $this->it = new Pinq\Where\NotEmpty($this->it);
                 return $this;
-            }
-
-            // If only two arguments were given assume comparison is equality
-            if (2 === func_num_args()) {
+            // If only one it should be a field name
+            } else if (1 === func_num_args()) {
+	            if (is_callable($field)) {
+		            $this->it = new Pinq\Where\Callback($this->it, $field);
+				} else {
+	            	$this->it = new Pinq\Where\NotEmpty($this->it, $field);
+				}
+             	return $this;
+	        // If only two arguments were given assume comparison is equality
+            } else if (2 === func_num_args()) {
+	            if (is_callable($comp)) {
+		            $this->it = new Pinq\Where\Callback($this->it, $comp, $field);
+		            return $this;
+	            }
+	
                 $value = $comp;
-                $comp = '=';
+                $comp = '=';	            
             }
 
             switch ($comp) {
                 case '=':
+                case 'eq':
+                case 'equal':
+                case 'equals':
                     $this->it = new Pinq\Where\Equal($this->it, $field, $value);
                     break;
                 case 'regexp':
@@ -152,17 +166,39 @@ namespace DrSlump {
          * @param int $direction
          * @return Pinq
          */
-        public function order($sortMethod, $direction = self::ASC)
+        public function order($cbOrFieldOrSortType = SORT_REGULAR, $direction = self::ASC)
         {
             // To sort we need to flush the iterator into an array
             $items = iterator_to_array($this->it, false);
 
+            if (is_string($cbOrFieldOrSortType)) {
+	            $field = $cbOrFieldOrSortType;
+	            $cbOrFieldOrSortType = function($a, $b) use ($field) {
+		            if (is_array($a)) {
+	                    $a = isset($a[$field]) ? $a[$field] : null;
+	                } else if (is_object($a)) {
+		                $a = isset($a->$field) ? $a->$field : null;
+	                }
+	
+		            if (is_array($b)) {
+	                    $b = isset($b[$field]) ? $b[$field] : null;
+	                } else if (is_object($b)) {
+		                $b = isset($b->$field) ? $b->$field : null;
+	                }
+	
+ 		            return strcmp($a, $b);
+	            };
+            }
+
             // Sort the array data
-            if (is_callable($sortMethod)) {
-                usort($items, $sortMethod);
+            if (is_callable($cbOrFieldOrSortType)) {
+                usort($items, $cbOrFieldOrSortType);
             } else {
                 // Regular sort function
-                sort($items, $sortMethod);
+	            $cbOrFieldOrSortType = is_int($cbOrFieldOrSortType) 
+	                                 ? $cbOrFieldOrSortType 
+	                                 : SORT_REGULAR;
+                sort($items, $cbOrFieldOrSortType);
             }
             
             // Reverse the array when the direction in descending
@@ -351,8 +387,8 @@ namespace DrSlump {
         }
 
         public function count($field = null)
-        {
-            $count = 0;
+        {	        
+            $count = 0;            
             $items = iterator_to_array($this->it, false);
             foreach ($items as $itm) {
                 if (is_array($itm)) {
