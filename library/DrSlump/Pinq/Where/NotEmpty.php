@@ -11,7 +11,7 @@ class NotEmpty extends \FilterIterator
      * @param \Traversable $it
      * @param string $field
      */
-    public function __construct(\Traversable $it, $field)
+    public function __construct(\Traversable $it, $field = NULL)
     {
         parent::__construct($it);
         $this->field = $field;
