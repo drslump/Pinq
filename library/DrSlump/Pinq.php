@@ -148,17 +148,24 @@ namespace DrSlump {
          * NOTE: Sorting large collections is slow and consumes more memory than
          *       other operations. Use it wisely.
          *
-         * @param callback $callback
+         * @param mixed $sortMethod
          * @param int $direction
          * @return Pinq
          */
-        public function order($callback, $direction = self::ASC)
+        public function order($sortMethod, $direction = self::ASC)
         {
             // To sort we need to flush the iterator into an array
             $items = iterator_to_array($this->it, false);
 
             // Sort the array data
-            usort($items, $callback);
+            if (is_callable($sortMethod)) {
+                usort($items, $sortMethod);
+            } else {
+                // Regular sort function
+                sort($items, $sortMethod);
+            }
+            
+            // Reverse the array when the direction in descending
             if ($direction === self::DESC) {
                 $items = array_reverse($items);
             }
