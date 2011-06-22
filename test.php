@@ -2,7 +2,6 @@
 
 require_once 'library/DrSlump/Pinq.php';
 
-
 $json = file_get_contents('http://search.twitter.com/search.json?q=cool');
 $data = json_decode($json);
 
@@ -29,14 +28,20 @@ foreach ($p as $k=>$itm) {
 }
 
 //var_dump($p->toArray());
-exit;
-
 
 $data = array('foo', 'bar', 'baz');
-$p = pinq($data->results)
+$p = pinq($data)
      ->where(null, 'match', '/^b/')
      ->order(function($a,$b){ return strcmp($a,$b); }, PINQ_ASC)
      ->limit(0, 2)
+     ->select(function($itm){ return strtoupper($itm); });
+
+$a = $p->toArray();
+var_dump($a);
+
+$data = array('foo', 'bar', 'baz');
+$p = pinq($data)
+     ->order(SORT_REGULAR, PINQ_ASC)
      ->select(function($itm){ return strtoupper($itm); });
 
 $a = $p->toArray();
