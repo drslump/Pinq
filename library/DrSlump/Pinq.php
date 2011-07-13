@@ -343,6 +343,26 @@ class Pinq implements \IteratorAggregate
     }
 
     /**
+     * Debug method to dump the contents using var_dump()
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return \DrSlump\Pinq - Fluent interface
+     */
+    public function dump($limit = null, $offset = 0)
+    {
+        $items = iterator_to_array($this->it, false);
+
+        if (NULL !== $limit) {
+            $items = array_slice($items, $offset, $limit);
+        }
+
+        var_dump($items);
+
+        return $this;
+    }
+
+    /**
      * Calculates the maximum value found in the data
      *
      * @param string $field
